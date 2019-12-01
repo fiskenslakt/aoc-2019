@@ -11,12 +11,8 @@ for module in modules:
     total_fuel += fuel
     real_total_fuel += fuel
 
-    while True:
-        fuel = fuel // 3 - 2
-        if fuel > 0:
-            real_total_fuel += fuel
-        else:
-            break
+    while (fuel := fuel // 3 - 2) > 0:
+        real_total_fuel += fuel
 
 print('Part 1:', total_fuel)
 print('Part 2:', real_total_fuel)
