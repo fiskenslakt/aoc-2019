@@ -69,8 +69,11 @@ class IntcodeComputer:
                 args.append(None)
                 break
 
-        # get output parameter
-        args.append(Code(self.memory[self.pointer+3]))
+        # try to get output parameter
+        try:
+            args.append(Code(self.memory[self.pointer+3]))
+        except IndexError:
+            args.append(None)
 
         return args
 
@@ -144,13 +147,14 @@ class IntcodeComputer:
                 raise InvalidIntcodeOp(f'Invalid Intcode op "{code.op}"')
 
 
-program = [code for code in data.split(',')]
-computer = IntcodeComputer(program)
-computer.execute('1')
-print('Diagnostic codes:', computer.diagnostic_codes)
-print('Part 1:', computer.diagnostic_codes[-1].value)
+if __name__ == '__main__':
+    program = [code for code in data.split(',')]
+    computer = IntcodeComputer(program)
+    computer.execute('1')
+    print('Diagnostic codes:', computer.diagnostic_codes)
+    print('Part 1:', computer.diagnostic_codes[-1].value)
 
-computer.reset()
-computer.execute('5')
-print('Diagnostic codes:', computer.diagnostic_codes)
-print('Part 2:', computer.diagnostic_codes[-1].value)
+    computer.reset()
+    computer.execute('5')
+    print('Diagnostic codes:', computer.diagnostic_codes)
+    print('Part 2:', computer.diagnostic_codes[-1].value)
