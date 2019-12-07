@@ -1,4 +1,4 @@
-from typing import List
+from typing import Callable, List
 
 from aocd import data
 
@@ -49,9 +49,18 @@ class IntcodeComputer:
         self.memory = program.copy()
         self.pointer = 0
         self.diagnostic_codes = []
+        self.ops = {1: self._op_1, 2: self._op_2, 3: self._op_3,
+                    4: self._op_4, 5: self._op_5, 6: self._op_6,
+                    7: self._op_7, 8: self._op_8}
 
-    def _get_op(self) -> Code:
+    def _get_op_code(self) -> Code:
         return Code(self.memory[self.pointer], is_op=True)
+
+    def _get_op(self, op_code: int) -> Callable:
+        try:
+            return self.ops[op_code]
+        except KeyError:
+            raise InvalidIntcodeOp(f'Invalid Intcode op code "{op_code}"')
 
     def _get_args(self, op: Code) -> List[Code]:
         args = []
@@ -77,6 +86,76 @@ class IntcodeComputer:
 
         return args
 
+    def _op_1(self, *args):
+        arg1, arg2, arg3, _ = args
+        self._add(arg1, arg2, arg3)
+
+    def _op_2(self, *args):
+        arg1, arg2, arg3, _ = args
+        self._multiply(arg1, arg2, arg3)
+
+    def _op_3(self, *args):
+        arg1, *_, system_id = args
+        self.memory[arg1.value] = system_id
+        self.pointer += 2
+
+    def _op_4(self, *args):
+        arg1, *_ = args
+        self.diagnostic_codes.append(arg1)
+        self.pointer += 2
+
+    def _op_5(self, *args):
+        arg1, arg2, *_ = args
+        self._jump_if_true(arg1, arg2)
+
+    def _op_6(self, *args):
+        arg1, arg2, *_ = args
+        self._jump_if_false(arg1, arg2)
+
+    def _op_7(self, *args):
+        arg1, arg2, arg3, _ = args
+        self._less_than(arg1, arg2, arg3)
+
+    def _op_8(self, *args):
+        arg1, arg2, arg3, _ = args
+        self._equals(arg1, arg2, arg3)
+
+    def _add(self, left_operand: Code, right_operand: Code, output: Code):
+        self.memory[output.value] = left_operand + right_operand
+        self.pointer += 4
+
+    def _multiply(self, left_operand: Code, right_operand: Code, output: Code):
+        self.memory[output.value] = left_operand * right_operand
+        self.pointer += 4
+
+    def _jump_if_true(self, predicate: Code, new_pointer: Code):
+        if predicate:
+            self.pointer = new_pointer.value
+        else:
+            self.pointer += 3
+
+    def _jump_if_false(self, predicate: Code, new_pointer: Code):
+        if not predicate:
+            self.pointer = new_pointer.value
+        else:
+            self.pointer += 3
+
+    def _less_than(self, left_operand: Code, right_operand: Code, output: Code):
+        if left_operand < right_operand:
+            self.memory[output.value] = 1
+        else:
+            self.memory[output.value] = 0
+
+        self.pointer += 4
+
+    def _equals(self, left_operand: Code, right_operand: Code, output: Code):
+        if left_operand == right_operand:
+            self.memory[output.value] = 1
+        else:
+            self.memory[output.value] = 0
+
+        self.pointer += 4
+
     def reset(self):
         """Reset memory and pointer to
         initial program state.
@@ -85,66 +164,11 @@ class IntcodeComputer:
         self.pointer = 0
         self.diagnostic_codes = []
 
-    def add(self, left_operand: Code, right_operand: Code, output: Code):
-        self.memory[output.value] = left_operand + right_operand
-        self.pointer += 4
-
-    def multiply(self, left_operand: Code, right_operand: Code, output: Code):
-        self.memory[output.value] = left_operand * right_operand
-        self.pointer += 4
-
-    def jump_if_true(self, predicate: Code, new_pointer: Code):
-        if predicate:
-            self.pointer = new_pointer.value
-        else:
-            self.pointer += 3
-
-    def jump_if_false(self, predicate: Code, new_pointer: Code):
-        if not predicate:
-            self.pointer = new_pointer.value
-        else:
-            self.pointer += 3
-
-    def less_than(self, left_operand: Code, right_operand: Code, output: Code):
-        if left_operand < right_operand:
-            self.memory[output.value] = 1
-        else:
-            self.memory[output.value] = 0
-
-        self.pointer += 4
-
-    def equals(self, left_operand: Code, right_operand: Code, output: Code):
-        if left_operand == right_operand:
-            self.memory[output.value] = 1
-        else:
-            self.memory[output.value] = 0
-
-        self.pointer += 4
-
     def execute(self, system_id: str):
-        while (code := self._get_op()).value != 99:
+        while (code := self._get_op_code()).value != 99:
             arg1, arg2, arg3 = self._get_args(code)
-
-            if code.op == 1:
-                self.add(arg1, arg2, arg3)
-            elif code.op == 2:
-                self.multiply(arg1, arg2, arg3)
-            elif code.op == 3:
-                self.memory[arg1.value] = system_id
-                self.pointer += 2
-            elif code.op == 4:
-                self.diagnostic_codes.append(arg1)
-                self.pointer += 2
-            elif code.op == 5:
-                self.jump_if_true(arg1, arg2)
-            elif code.op == 6:
-                self.jump_if_false(arg1, arg2)
-            elif code.op == 7:
-                self.less_than(arg1, arg2, arg3)
-            elif code.op == 8:
-                self.equals(arg1, arg2, arg3)
-            else:
-                raise InvalidIntcodeOp(f'Invalid Intcode op "{code.op}"')
+            op = self._get_op(code.op)
+            op(arg1, arg2, arg3, system_id)
 
 
 if __name__ == '__main__':
