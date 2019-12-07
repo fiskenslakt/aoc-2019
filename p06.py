@@ -1,49 +1,50 @@
-from aocd import data
 from collections import defaultdict, deque
 
-def dfs(orbits, obj):
-    if obj not in orbits:
+from aocd import data
+
+
+def dfs(orbits, mass):
+    if mass not in orbits:
         return 0
-    n = 0
-    for new_obj in orbits[obj]:
-        n += 1 + dfs(orbits, new_obj)
 
-    return n
+    n_orbits = 0
+    for new_mass in orbits[mass]:
+        n_orbits += 1 + dfs(orbits, new_mass)
+
+    return n_orbits
 
 
-orbits = defaultdict(list)
+def bfs(orbits, start_mass, end_mass):
+    # offset orbital jumps to -2
+    # to not count start and end mass
+    queue = deque([(start_mass, -2)])
+    seen = set([start_mass])
 
-for line in data.splitlines():
-    a, b = line.split(')')
-    orbits[a].append(b)
+    while queue:
+        mass, jumps = queue.popleft()
 
-print(sum(dfs(orbits, obj) for obj in orbits))
+        if mass == end_mass:
+            return jumps
 
-orbits = defaultdict(list)
-
-for line in data.splitlines():
-    a, b = line.split(')')
-    orbits[a].append(b)
-    orbits[b].append(a)
-
-q = deque([('YOU', -2)])
-n = 0
-seen = set()
-while q:
-    size = len(q)
-    for _ in range(size):
-        obj, n = q.popleft()
-        seen.add(obj)
-
-        if obj == 'SAN':
-            print(n)
-            raise SystemExit
-
-        for nobj in orbits[obj]:
-            if nobj in seen:
+        for new_mass in orbits[mass]:
+            if new_mass in seen:
                 continue
-            q.append((nobj, n+1))
-            seen.add(nobj)
 
-print(n)
+            queue.append((new_mass, jumps+1))
+            seen.add(new_mass)
 
+
+orbits = defaultdict(list)
+
+for orbit in data.splitlines():
+    orbiter, orbitee = orbit.split(')')
+    orbits[orbiter].append(orbitee)
+
+print('Part 1:', sum(dfs(orbits, mass) for mass in orbits))
+
+for orbit in data.splitlines():
+    orbiter, orbitee = orbit.split(')')
+    orbits[orbitee].append(orbiter)
+
+jumps = bfs(orbits, 'YOU', 'SAN')
+print('Part 2:', jumps)
