@@ -20,7 +20,7 @@ layers = []
 for i in range(0, len(data), AREA):
     layers.append(data[i:i+AREA])
 
-for row, pixel in enumerate(zip(*layers), 1):
+for i, pixel in enumerate(zip(*layers), 1):
     for layer in pixel:
         if layer == '1':
             print('#', end='')
@@ -29,5 +29,5 @@ for row, pixel in enumerate(zip(*layers), 1):
             print(' ', end='')
             break
 
-    if row % 25 == 0:
+    if i % 25 == 0:
         print()
