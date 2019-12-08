@@ -1,30 +1,33 @@
 from aocd import data
 
-x = 25 * 6
+
+WIDTH = 25
+HEIGHT = 6
+AREA = WIDTH * HEIGHT
+
+zero_frequencies = []
+
+for i in range(0, len(data), AREA):
+    zero_frequencies.append(data[i:i+AREA].count('0'))
+
+fewest_zeros = zero_frequencies.index(min(zero_frequencies))
+ones = data[AREA*fewest_zeros:AREA*fewest_zeros+AREA].count('1')
+twos = data[AREA*fewest_zeros:AREA*fewest_zeros+AREA].count('2')
+print('Part 1:', ones*twos)
+
+print('Part 2:')
 layers = []
-for i in range(0, len(data), x):
-    layers.append(data[i:i+x].count('0'))
+for i in range(0, len(data), AREA):
+    layers.append(data[i:i+AREA])
 
-smallest = layers.index(min(layers))
-print(data[x*smallest:x*smallest+x].count('1')*data[x*smallest:x*smallest+x].count('2'))
-
-layers = []
-for i in range(0, len(data), x):
-    layers.append(data[i:i+x+1])
-
-line = 0
-for pixel in zip(*layers):
-    line += 1
+for row, pixel in enumerate(zip(*layers), 1):
     for layer in pixel:
-        if layer == '0':
-            print(' ',end='')
+        if layer == '1':
+            print('#', end='')
             break
-        elif layer == '1':
-            print('#',end='')
+        elif layer == '0':
+            print(' ', end='')
             break
-    else:
-        print(' ',end='')
 
-    if line == 25:
+    if row % 25 == 0:
         print()
-        line = 0
