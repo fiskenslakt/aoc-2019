@@ -21,4 +21,24 @@ for phase in range(PHASES):
 
     signal = [int(digit) for digit in new_signal]
 
-print(''.join(str(digit) for digit in signal[:8]))
+print('Part 1:', ''.join(str(digit) for digit in signal[:8]))
+
+signal = [int(digit) for digit in data] * 10_000
+offset = int(data[:7])
+signal = signal[offset:]
+
+for phase in range(PHASES):
+    # every digit before offset is
+    # multiplied by zero
+    partial_sum = sum(signal)
+    for position in range(len(signal)):
+        # store value to remove from sum
+        # as we're about to change it
+        old_value = signal[position]
+        signal[position] = partial_sum % 10
+        # current digit will be multiplied by zero
+        # in next theoretical part of the pattern
+        # so we just remove it from the sum
+        partial_sum -= old_value
+
+print('Part 2:', ''.join(str(digit) for digit in signal[:8]))
